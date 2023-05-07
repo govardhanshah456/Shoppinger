@@ -5,6 +5,40 @@ const { upload } = require("../multer")
 const User = require('../model/user')
 const ErrorHandler = require('../utils/errroHandler')
 const fs = require("fs")
+const jwt = require("jsonwebtoken")
+const sendMail = require('../utils/sendMail')
+const catchAsyncErrors = require('../middleware/catchAsyncErrors')
+const passport = require("passport")
+const sendToken = require('../utils/jwtToken')
+const { isAuthenticated } = require('../middleware/auth')
+router.get("/login/success", (req, res) => {
+    if (req.user) {
+        res.status(200).json({
+            error: false,
+            message: "Successfully Loged In",
+            user: req.user,
+        });
+    } else {
+        res.status(403).json({ error: true, message: "Not Authorized" });
+    }
+});
+
+router.get("/login/failed", (req, res) => {
+    res.status(401).json({
+        error: true,
+        message: "Log in failure",
+    });
+});
+
+router.get("/google", passport.authenticate("google", ["profile", "email"]));
+
+router.get(
+    "/google/callback",
+    passport.authenticate("google", {
+        successRedirect: "http://localhost:3000/login/success",
+        failureRedirect: "/login/failed",
+    })
+);
 router.post("/create-user", upload.single('file'), async (req, res, next) => {
     const { name, email, password } = req.body;
     const userEmail = await User.findOne({ email });
@@ -29,14 +63,110 @@ router.post("/create-user", upload.single('file'), async (req, res, next) => {
         email: email,
         password: password,
         avatar: fileUrl,
-        role: "string",
     };
-    const newUser = User.create(user);
-    res.status(200).send({
-        message: "Registration Successfull",
-        newUser,
-    })
+    const activationToken = createActivationToken(user)
+    const encodedToken = Buffer.from(activationToken).toString('base64');
+
+    console.log(activationToken)
+    const activationUrl = `http://localhost:3000/activation/${encodedToken}`
+    try {
+        await sendMail({
+            email: user.email,
+            subject: "Activate your account",
+            message: `Hello ${user.name}, please click on the link to activate your account: ${activationUrl}`,
+        });
+        res.status(201).json({
+            success: true,
+            message: `please check your email:- ${user.email} to activate your account!`,
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+
 
 })
+const createActivationToken = (user) => {
+    return jwt.sign(user, process.env.ACTIVATION_SECRET, {
+        expiresIn: "10m",
+    })
+}
+router.post("/activation", catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { activation_token } = (req.body)
+        console.log(activation_token)
+        const decoded = Buffer.from(activation_token, 'base64').toString('ascii')
+        const newUser = jwt.verify(decoded, process.env.ACTIVATION_SECRET)
+        if (!newUser) {
+            return next(new ErrorHandler("Invalid Token", 400))
+        }
+        const { name, email, password, avatar } = newUser
+        let user = await User.findOne({ email })
+        if (user) {
+            return next(new ErrorHandler("User Already Exists", 400))
+        }
+        newUser = await User.create({
+            name,
+            email,
+            password,
+            avatar,
+        })
+        sendToken(newUser, 201, res)
+    }
+    catch (err) {
+        return next(new ErrorHandler("Error:" + err.message, 400))
+    }
+}))
+router.post(
+    "/login-user",
+    catchAsyncErrors(async (req, res, next) => {
+        try {
+            const { email, password } = req.body;
 
+            if (!email || !password) {
+                return next(new ErrorHandler("Please provide the all fields!", 400));
+            }
+
+            const user = await User.findOne({ email }).select("+password");
+
+            if (!user) {
+                return next(new ErrorHandler("User doesn't exists!", 400));
+            }
+
+            const isPasswordValid = await user.comparePassword(password);
+
+            if (!isPasswordValid) {
+                return next(
+                    new ErrorHandler("Please provide the correct information", 400)
+                );
+            }
+            console.log("here reached")
+            sendToken(user, 201, res);
+            console.log("here reached1")
+        } catch (error) {
+            return next(new ErrorHandler(error.message, 500));
+        }
+    })
+);
+
+router.get(
+    "/getuser",
+    isAuthenticated,
+    catchAsyncErrors(async (req, res, next) => {
+        try {
+            console.log(req.user.id)
+            const user = await User.findById(req.user.id);
+
+            if (!user) {
+                return next(new ErrorHandler("User doesn't exists", 400));
+            }
+            console.log(user)
+            res.status(200).json({
+                success: true,
+                user,
+            });
+        } catch (error) {
+            return next(new ErrorHandler(error.message, 500));
+        }
+    })
+);
 module.exports = router

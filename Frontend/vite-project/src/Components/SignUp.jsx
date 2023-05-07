@@ -5,6 +5,7 @@ import styles from "../Styles/styles.js";
 import { Link } from 'react-router-dom';
 import axios from "axios"
 import { server } from "../server"
+import { toast } from "react-toastify";
 const SignUp = () => {
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
@@ -16,7 +17,6 @@ const SignUp = () => {
         setAvatar(file);
     };
     const handleSubmit = (e) => {
-        console.log("called")
         e.preventDefault();
         console.log(name);
         console.log(email);
@@ -31,11 +31,14 @@ const SignUp = () => {
         newForm.append('name', name)
         newForm.append('email', email)
         newForm.append('password', password)
-        console.log(newForm)
         axios.post(`${server}/user/create-user`, newForm, config).then((res) => {
-            console.log(res)
+            toast.success(res.data.message)
+            setName("")
+            setEmail("")
+            setPassword("")
+            setAvatar()
         }).catch((err) => {
-            console.log(err);
+            toast.error(err.response.data.message);
         })
     }
     return (
