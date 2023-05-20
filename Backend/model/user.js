@@ -10,9 +10,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please Enter Your Email!"],
     },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    isGoogleUser: {
+        type: Boolean,
+        default: false,
+    },
     password: {
         type: String,
-        required: [true, "Please Enter Your Password!"],
+        required: function () {
+            return !this.isGoogleUser;
+        },
         minLength: [4, "Password Should Be Greater Than 4 Characters."],
         select: false,
     },
@@ -69,4 +80,4 @@ userSchema.methods.getJwtToken = function () {
 userSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
-module.exports = mongoose.mongoose.model("User", userSchema);
+module.exports = mongoose.model("User", userSchema);

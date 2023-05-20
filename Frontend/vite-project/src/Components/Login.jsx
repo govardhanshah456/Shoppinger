@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc"
 import styles from "../Styles/styles.js";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify"
 import axios from "axios"
 import { server } from '../server.js';
@@ -24,7 +24,8 @@ const Login = () => {
             )
             .then((res) => {
                 toast.success("Login Success!");
-                navigate("/");
+                <Navigate to="/" />
+                window.location.reload(true)
             })
             .catch((err) => {
                 toast.error(err.response.data.message);
@@ -84,7 +85,9 @@ const Login = () => {
                         </div>
                         <div className='flex-row'>
                             <button type='submit' className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 my-2">Submit</button>
-                            {/* <button className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-pink-400 hover:bg-pink-300 " onClick={googleAuth}><FcGoogle size={25} mr-5 /><p className='ml-4'> Sign in with Google.</p></button> */}
+                            {/* <button className="group relative w-full h-[40px] flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-pink-400 hover:bg-pink-300 " onClick={handleGoogleLogin}><FcGoogle size={25} mr-5 /><p className='ml-4'> Sign in with Google.</p></button> */}
+                            {/* <a href="/api/v2/auth/google" class="btn btn-primary">Login with Google</a> */}
+
                         </div>
                         <div className={`${styles.noramlFlex} w-full mx-2`}>
                             <h4 className='mx-2 text-black-900'>Not have any account?</h4>

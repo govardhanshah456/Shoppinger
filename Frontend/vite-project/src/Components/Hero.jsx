@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 const Hero = () => {
     return (
         <div className={`${styles.section} flex flex-row`}>
-            <div className={`relative min-h-[70vh] 800px:min-h-[80vh] w-full bg-no-repeat ${styles.normalFlex}`} style={{
+            <div className={`hidden md:block min-h-[70vh] 800px:min-h-[80vh] w-full bg-no-repeat ${styles.noramlFlex} `} style={{
                 backgroundImage: "url(https://img.freepik.com/free-vector/ecommerce-web-page-concept-illustration_114360-8204.jpg?w=1060&t=st=1683455484~exp=1683456084~hmac=d9486b8058b9905b6683fca16be1ac797966ffd96b9c2ca771ada99b9cbdf9ee)",
                 backgroundSize: "cover", /* ensure the image covers the entire div */
                 backgroundPosition: "center",

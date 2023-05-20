@@ -11,34 +11,6 @@ const catchAsyncErrors = require('../middleware/catchAsyncErrors')
 const passport = require("passport")
 const sendToken = require('../utils/jwtToken')
 const { isAuthenticated } = require('../middleware/auth')
-router.get("/login/success", (req, res) => {
-    if (req.user) {
-        res.status(200).json({
-            error: false,
-            message: "Successfully Loged In",
-            user: req.user,
-        });
-    } else {
-        res.status(403).json({ error: true, message: "Not Authorized" });
-    }
-});
-
-router.get("/login/failed", (req, res) => {
-    res.status(401).json({
-        error: true,
-        message: "Log in failure",
-    });
-});
-
-router.get("/google", passport.authenticate("google", ["profile", "email"]));
-
-router.get(
-    "/google/callback",
-    passport.authenticate("google", {
-        successRedirect: "http://localhost:3000/login/success",
-        failureRedirect: "/login/failed",
-    })
-);
 router.post("/create-user", upload.single('file'), async (req, res, next) => {
     const { name, email, password } = req.body;
     const userEmail = await User.findOne({ email });
@@ -153,13 +125,13 @@ router.get(
     isAuthenticated,
     catchAsyncErrors(async (req, res, next) => {
         try {
-            console.log(req.user.id)
+            // console.log(req.user.id)
             const user = await User.findById(req.user.id);
 
             if (!user) {
                 return next(new ErrorHandler("User doesn't exists", 400));
             }
-            console.log(user)
+            // console.log(user)
             res.status(200).json({
                 success: true,
                 user,
@@ -169,4 +141,18 @@ router.get(
         }
     })
 );
+router.get("/logout", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        res.cookie("token", null, {
+            expires: new Date(Date.now()),
+            httpOnly: true,
+        })
+        res.status(201).send({
+            success: true,
+            message: "Log Out Successfull!",
+        })
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500))
+    }
+}))
 module.exports = router
