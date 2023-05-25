@@ -4,12 +4,15 @@ import { productData } from '../Static/data'
 import Header from '../Components/Header'
 import styles from '../Styles/styles'
 import ProductCard from '../Components/ProductCard'
+import { useSelector } from 'react-redux'
 const BestSelling = () => {
     const [data, setData] = useState([])
+    const { allProducts } = useSelector((state) => state.product)
     useEffect(() => {
-        const d = productData && productData.sort((a, b) => b.total_sell - a.total_sell)
+        const d = allProducts
         setData(d)
-    }, [])
+    }, [allProducts])
+    // console.log(allProduct)
     return (
         <>
             <Header activeHeading={2} />

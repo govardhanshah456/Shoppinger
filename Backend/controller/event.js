@@ -4,7 +4,6 @@ const { upload } = require("../multer")
 const catchAsyncErrors = require("../middleware/catchAsyncErrors")
 const ErrorHandler = require("../utils/errroHandler")
 const Shop = require("../model/shop")
-const event = require("../model/event")
 const Event = require("../model/event")
 const fs = require('fs')
 const { isSellerAuthenticated } = require("../middleware/auth")
@@ -47,18 +46,19 @@ router.get("/get-all-events-shop/:id", catchAsyncErrors(async (req, res, next) =
         return next(new ErrorHandler(error.message, 500))
     }
 }))
-router.get("/get-all-events", catchAsyncErrors(async (req, res, next) => {
+router.get("/get-all-events", async (req, res, next) => {
     try {
-        const event = await Event.find()
+        console.log("Inside Here Now")
+        const events = await Event.find();
         res.status(201).json({
             success: true,
-            event,
-        })
+            events,
+        });
+        console.log("Here Ended")
+    } catch (error) {
+        return next(new ErrorHandler(error, 400));
     }
-    catch (error) {
-        return next(new ErrorHandler(error.message, 500))
-    }
-}))
+});
 
 router.delete("/delete-event/:id", isSellerAuthenticated, catchAsyncErrors(async (req, res, next, err) => {
     console.log("inside here")

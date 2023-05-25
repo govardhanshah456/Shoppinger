@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     AiFillHeart,
     AiOutlineHeart,
@@ -7,14 +7,35 @@ import {
 } from "react-icons/ai";
 import { RxCross1 } from "react-icons/rx";
 import styles from "../Styles/styles";
-
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { addToCart } from "../redux/actions/cart";
+import { addTowishlist, removeFromwishlist } from "../redux/actions/wishlist";
+import { backend_url } from "../server";
 const ProductDetailsCard = ({ setOpen, data }) => {
     const [count, setCount] = useState(1);
     const [click, setClick] = useState(false);
+    const dispatch = useDispatch()
     //   const [select, setSelect] = useState(false);
-
+    const { cart } = useSelector((state) => state.cart)
     const handleMessageSubmit = () => { };
-
+    const { wishlist } = useSelector((state) => state.wishlist)
+    useEffect(() => {
+        if (wishlist && wishlist.find((i) => i._id === data._id)) {
+            setClick(true)
+        }
+        else {
+            setClick(false)
+        }
+    }, [wishlist])
+    const addToWishlistHandler = (data) => {
+        setClick(!click)
+        dispatch(addTowishlist(data))
+    }
+    const removeFromWishlistHandler = (data) => {
+        setClick(!click)
+        dispatch(removeFromwishlist(data))
+    }
     const decrementCount = () => {
         if (count > 1) {
             setCount(count - 1);
@@ -24,7 +45,21 @@ const ProductDetailsCard = ({ setOpen, data }) => {
     const incrementCount = () => {
         setCount(count + 1);
     };
-
+    const addToCartHandler = (id) => {
+        const isItemExists = cart && cart.find((i) => i._id === id);
+        if (isItemExists) {
+            toast.error("Item already in cart!");
+        } else {
+            if (data.stock < count) {
+                toast.error("Product stock limited!");
+            } else {
+                const cartData = { ...data, qty: count };
+                dispatch(addToCart(cartData));
+                toast.success("Item added to cart successfully!");
+            }
+        }
+    };
+    console.log(data)
     return (
         <div className="bg-[#fff]">
             {data ? (
@@ -38,10 +73,10 @@ const ProductDetailsCard = ({ setOpen, data }) => {
 
                         <div className="block w-full 800px:flex">
                             <div className="w-full 800px:w-[50%]">
-                                <img src={data.image_Url[0].url} alt="" />
+                                <img src={`${backend_url}${data.images[0]}`} alt="" />
                                 <div className="flex">
                                     <img
-                                        src={data.shop.shop_avatar.url}
+                                        src={`${backend_url}${data.shop.avatar}`}
                                         alt=""
                                         className="w-[50px] h-[50px] rounded-full mr-2"
                                     />
@@ -61,7 +96,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                                     </span>
                                 </div>
                                 <h5 className="text-[16px] text-[red] mt-5">
-                                    ({data.total_sell}) Sold out
+                                    ({data.sold_out}) Sold out
                                 </h5>
                             </div>
 
@@ -73,10 +108,10 @@ const ProductDetailsCard = ({ setOpen, data }) => {
 
                                 <div className="flex pt-3">
                                     <h4 className={`${styles.productDiscountPrice}`}>
-                                        {data.discount_price}$
+                                        {data.discountedPrice}$
                                     </h4>
                                     <h3 className={`${styles.price}`}>
-                                        {data.price ? data.price + "$" : null}
+                                        {data.originalPrice ? data.originalPrice + "$" : null}
                                     </h3>
                                 </div>
                                 <div className="flex items-center mt-12 justify-between pr-3">
@@ -102,7 +137,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                                             <AiFillHeart
                                                 size={30}
                                                 className="cursor-pointer"
-                                                onClick={() => setClick(!click)}
+                                                onClick={() => removeFromWishlistHandler(data)}
                                                 color={click ? "red" : "#333"}
                                                 title="Remove from wishlist"
                                             />
@@ -110,7 +145,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                                             <AiOutlineHeart
                                                 size={30}
                                                 className="cursor-pointer"
-                                                onClick={() => setClick(!click)}
+                                                onClick={() => addToWishlistHandler(data)}
                                                 color={click ? "red" : "#333"}
                                                 title="Add to wishlist"
                                             />
@@ -119,6 +154,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                                 </div>
                                 <div
                                     className={`${styles.button} mt-6 rounded-[4px] h-11 flex items-center`}
+                                    onClick={() => addToCartHandler(data._id)}
                                 >
                                     <span className="text-[#fff] flex items-center">
                                         Add to cart <AiOutlineShoppingCart className="ml-1" />

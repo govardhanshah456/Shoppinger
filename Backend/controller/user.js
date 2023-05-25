@@ -155,4 +155,46 @@ router.get("/logout", isAuthenticated, catchAsyncErrors(async (req, res, next) =
         return next(new ErrorHandler(error.message, 500))
     }
 }))
+
+router.put("/update-user-info", upload.none(), isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    const { name, email, password, phoneNumber } = req.body
+    const user = await User.findOne({ email }).select("+password");
+    console.log(req.body)
+    if (!user) {
+        return next(new ErrorHandler("Invalid User", 500))
+    }
+    console.log(user)
+    const passwordValid = await user.comparePassword(password)
+    if (!passwordValid) {
+        return next(new ErrorHandler("Invalid User Credentials", 500))
+    }
+    user.name = name
+    user.email = email
+    user.phoneNumber = phoneNumber
+    await user.save()
+    res.status(201).json({
+        success: true,
+        user
+    })
+}))
+
+router.put("/update-user-avatar", isAuthenticated, upload.single("image"), catchAsyncErrors(async (req, res, next) => {
+    console.log(req.body)
+    try {
+        const userExist = await User.findById(req.user.id)
+        const pathOfAvatar = `uploads/${userExist.avatar}`
+        fs.unlinkSync(pathOfAvatar)
+        const newFile = path.join(req.file.filename)
+        const user = await User.findByIdAndUpdate(req.user.id, {
+            avatar: newFile
+        })
+
+        res.status(201).json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500))
+    }
+}))
 module.exports = router

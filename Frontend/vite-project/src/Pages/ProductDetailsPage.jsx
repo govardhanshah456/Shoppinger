@@ -9,18 +9,18 @@ import SuggestedProduct from "../Components/SuggestedProduct.jsx"
 import { useDispatch, useSelector } from 'react-redux'
 import { getAllProducts } from '../redux/actions/product'
 const ProductDetailsPage = () => {
-    const { name } = useParams()
+    const { id } = useParams()
     const { allProducts } = useSelector((state) => state.product)
     const [data, setData] = useState(null)
-    const productName = name.replace(/-/g, " ")
+    // const productName = name.replace(/-/g, " ")
     const dispatch = useDispatch()
-    console.log(productName)
+    // console.log(productName)
     useEffect(() => {
         dispatch(getAllProducts())
 
     }, [])
     useEffect(() => {
-        const dt = allProducts && allProducts.find((i) => i.name === productName)
+        const dt = allProducts && allProducts.find((i) => i._id === id)
         console.log(dt)
         setData(dt)
     })

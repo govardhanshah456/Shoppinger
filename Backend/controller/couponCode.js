@@ -5,8 +5,10 @@ const couponCode = require("../model/couponCode")
 const ErrorHandler = require("../utils/errroHandler")
 const { isSellerAuthenticated } = require("../middleware/auth")
 router.post("/create-coupon-code", catchAsyncError(async (req, res, next) => {
+    console.log(req.body)
     const exist = await couponCode.find({ name: req.body.name })
-    if (exist) {
+    console.log(exist)
+    if (exist.length != 0) {
         return next(new ErrorHandler("CouponCode Already Exists!", 400))
     }
     const createCouponCode = await couponCode.create(req.body)
@@ -23,12 +25,12 @@ router.get("/get-coupon/:id", isSellerAuthenticated, catchAsyncError(async (req,
     }
     res.status(201).json({
         success: true,
-        details
+        details,
     })
 }))
-router.delete("/delete-coupon/:id", catchAsyncError(async (req, res, next) => {
+router.delete("/delete-coupon/:id", isSellerAuthenticated, catchAsyncError(async (req, res, next) => {
     const id = req.params.id
-    const exist = await couponCode.find(id)
+    const exist = await couponCode.findById(id)
     if (!exist) {
         return next(new ErrorHandler("No Such Product Exist!", 400))
     }

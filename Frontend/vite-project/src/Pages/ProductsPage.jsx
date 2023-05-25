@@ -5,18 +5,20 @@ import { useSearchParams } from 'react-router-dom'
 import { productData } from '../Static/data'
 import styles from '../Styles/styles'
 import ProductCard from '../Components/ProductCard'
+import { useSelector } from 'react-redux'
 const ProductsPage = () => {
     const [search] = useSearchParams()
     const category = search.get("category")
     const [data, setData] = useState([]);
+    const { allProducts } = useSelector((state) => state.product)
     useEffect(() => {
         if (category === null) {
             const d =
-                productData;
+                allProducts;
             setData(d);
         } else {
             const d =
-                productData && productData.filter((i) => i.category === category);
+                allProducts && allProducts.filter((i) => i.category === category);
             setData(d);
         }
         //    window.scrollTo(0,0);

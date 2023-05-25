@@ -32,6 +32,8 @@ import ShopShowProduct from './Pages/ShopShowProduct'
 import ShopCreateEvent from './Pages/ShopCreateEvent'
 import ShopAllEvents from './Pages/ShopAllEvents'
 import ShopAllCouponCodes from './Pages/ShopAllCouponCodes'
+import { getAllEvents } from './redux/actions/event'
+import ShopPreviewPage from './Pages/ShopPreviewPage'
 const App = () => {
   // const dispatch = useDispatch()
   const { loading, isAuthenticated } = useSelector((state) => state.user)
@@ -39,13 +41,14 @@ const App = () => {
   useEffect(() => {
     Store.dispatch(loadUser())
     Store.dispatch(loadSeller())
+    Store.dispatch(getAllEvents())
   }, [])
   return (
     <>
       {loading || isLoading ? (<Loader />) : (<BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/product/:name" element={<ProductDetailsPage />} />
+          <Route path="/product/:id" element={<ProductDetailsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/products" element={<ProductsPage />} />
@@ -102,11 +105,17 @@ const App = () => {
             }
           />
           <Route
-            path="/dashboard-coupon-codes"
+            path="/dashboard-coupons"
             element={
               <SellerProtectedRoute>
                 <ShopAllCouponCodes />
               </SellerProtectedRoute>
+            }
+          />
+          <Route
+            path="/shop/preview/:id"
+            element={
+              <ShopPreviewPage />
             }
           />
         </Routes>

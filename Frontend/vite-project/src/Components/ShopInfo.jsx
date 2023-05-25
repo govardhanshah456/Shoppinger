@@ -12,6 +12,7 @@ const ShopInfo = ({ isOwner }) => {
     const { seller } = useSelector((state) => state.seller)
     const loggedin = seller._id
     const { id } = useParams();
+    console.log(isOwner)
     useEffect(() => {
         setIsLoading(true);
         axios.get(`${server}/shop/get-shop-info/${id}`).then((res) => {
@@ -70,7 +71,7 @@ const ShopInfo = ({ isOwner }) => {
                             <h5 className="font-[600]">Joined On</h5>
                             <h4 className="text-[#000000b0]">{data.createdAt}</h4>
                         </div>
-                        {id === loggedin && (
+                        {isOwner && (
                             <div className="py-3 px-4">
                                 <div className={`${styles.button} !w-full !h-[42px] !rounded-[5px]`}>
                                     <span className="text-white">Edit Shop</span>

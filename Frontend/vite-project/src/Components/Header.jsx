@@ -9,26 +9,40 @@ import { BiMenuAltLeft } from "react-icons/bi"
 import { CgProfile } from "react-icons/cg"
 import Navbar from './Navbar'
 import Dropdown from './Dropdown'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { backend_url } from '../server'
 import Cart from './Cart'
 import WishList from "./WishList"
 import { RxCross1 } from 'react-icons/rx'
+import { useEffect } from 'react'
+import { getAllProducts } from '../redux/actions/product'
+// import { backend_url } from '../server'
 const Header = (activeHeading) => {
     const [search, setSearch] = useState("")
+    const { wishlist } = useSelector((state) => state.wishlist)
     const [searchData, setSearchData] = useState(null)
     const { isAuthenticated, user } = useSelector((state) => state.user)
     const [open, setOpen] = useState()
+    const { allProducts } = useSelector((state) => state.product)
+    const { cart } = useSelector((state) => state.cart)
+    const dispatch = useDispatch()
+    useEffect(() => {
+        dispatch(getAllProducts())
+    }, [])
+    console.log(wishlist)
     // const [categoriesData, setCategoriesData] = useState(null)
     // const handleSearchChange = (e) => {
     //     e.preventDefault()
     // }
+
     const handleSearchChange = (e) => {
-        e.preventDefault();
-        const val = e.target.value
-        setSearch(val)
-        const filteredProducts = productData && productData.filter((product) => product.name.toLowerCase().includes(val))
-        setSearchData(filteredProducts)
+        const term = e.target.value;
+        setSearch(term);
+
+        const filteredProducts = allProducts && allProducts.filter((product) =>
+            product.name.toLowerCase().includes(term.toLowerCase())
+        );
+        setSearchData(filteredProducts);
     }
     const [active, setActive] = useState(false)
     window.addEventListener("scroll", () => {
@@ -62,7 +76,7 @@ const Header = (activeHeading) => {
                                             return (
                                                 <Link to={`/product/${i.id}`}>
                                                     <div className='w-full flex items-start-py-3'>
-                                                        <img src={`${i.image_Url[0].url}`} className='w-[40px] h-[40px] mr-[10px]'
+                                                        <img src={`${backend_url}${i.images[0]}`} className='w-[40px] h-[40px] mr-[10px]'
                                                         />
                                                         <h1>{i.name}</h1>
                                                     </div>
@@ -119,7 +133,7 @@ const Header = (activeHeading) => {
                                 <div className="relative cursor-pointer mr-[15px]" onClick={() => setOpenWishList(true)}>
                                     <AiOutlineHeart size={30} color="rgb(255 255 255 / 83%)" />
                                     <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
-                                        0
+                                        {wishlist && wishlist.length}
                                     </span>
                                 </div>
                             </div>
@@ -132,13 +146,13 @@ const Header = (activeHeading) => {
 
                                     />
                                     <span className="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px] leading-tight text-center">
-                                        0
+                                        {cart && cart.length}
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className={`${styles.normalFlex}`}>
+                    <div className={`${styles.noramlFlex}`}>
                         <div className='"relative cursor-pointer mr-[15px]'>
                             {
                                 isAuthenticated ? (
@@ -193,7 +207,7 @@ const Header = (activeHeading) => {
                         <div className="relative mr-[20px]">
                             <AiOutlineShoppingCart size={30} />
                             <span class="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px]  leading-tight text-center">
-                                1
+                                {cart && cart.length}
                             </span>
                         </div>
                     </div>
@@ -281,7 +295,7 @@ const Header = (activeHeading) => {
                                             to="/login"
                                             className="text-[18px] pr-[10px] text-[#000000b7]"
                                         >
-                                            Login /
+                                            Login
                                         </Link>
                                         <Link
                                             to="/sign-up"

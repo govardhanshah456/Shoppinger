@@ -5,6 +5,9 @@ import { AiFillHeart, AiOutlineHeart, AiOutlineMessage, AiOutlineShoppingCart } 
 import { useDispatch, useSelector } from 'react-redux'
 import { getAllProductsShop } from '../redux/actions/product'
 import { backend_url } from '../server'
+import { toast } from 'react-toastify'
+import { addToCart } from '../redux/actions/cart'
+import { addTowishlist, removeFromwishlist } from '../redux/actions/wishlist'
 // import { set } from 'mongoose'
 const ProductDetails = ({ data }) => {
     const [count, setCount] = useState(1)
@@ -12,6 +15,7 @@ const ProductDetails = ({ data }) => {
     const navigate = useNavigate()
     const [select, setSelect] = useState(0)
     const { product } = useSelector((state) => state.product)
+    const { cart } = useSelector((state) => state.cart)
     const dispatch = useDispatch()
     useEffect(() => {
         dispatch(getAllProductsShop(data && data.shop._id));
@@ -21,13 +25,44 @@ const ProductDetails = ({ data }) => {
             setCount(count - 1);
         }
     };
-
     const incrementCount = () => {
         setCount(count + 1);
     };
     const handleMessageSubmit = () => {
 
     }
+    const { wishlist } = useSelector((state) => state.wishlist)
+    useEffect(() => {
+        if (wishlist && wishlist.find((i) => i._id === data?._id)) {
+            setClick(true);
+        } else {
+            setClick(false);
+        }
+    }, [wishlist, data]);
+    console.log(data)
+    const addToWishlistHandler = (data) => {
+        setClick(!click)
+        dispatch(addTowishlist(data))
+    }
+    const removeFromWishlistHandler = (data) => {
+        setClick(!click)
+        dispatch(removeFromwishlist(data))
+    }
+    // const { cart } = useSelector((state) => state.cart)
+    const addToCartHandler = (id) => {
+        const isItemExists = cart && cart.find((i) => i._id === id);
+        if (isItemExists) {
+            toast.error("Item already in cart!");
+        } else {
+            if (data.stock < count) {
+                toast.error("Product stock limited!");
+            } else {
+                const cartData = { ...data, qty: count };
+                dispatch(addToCart(cartData));
+                toast.success("Item added to cart successfully!");
+            }
+        }
+    };
     return (
         <div className='bg-white '>
             {
@@ -36,7 +71,7 @@ const ProductDetails = ({ data }) => {
                         <div className='w-full py-5'>
                             <div className='block w-full 800px:flex'>
                                 <div className='w-full 800px:w-[50%]'>
-                                    <img src={data.images[select]} className='w-[80%]' />
+                                    <img src={`${backend_url}${data.images[select]}`} className='w-[80%]' />
                                     <div className='w-full flex'>
                                         {
                                             data && data.images.map((i, index) => (
@@ -61,8 +96,8 @@ const ProductDetails = ({ data }) => {
                                     </h1>
                                     <p>{data.description}</p>
                                     <div className='flex pt-3'>
-                                        <h4 className={`${styles.productDiscountPrice}`}>${data.discount_price}</h4>
-                                        <h3 className={`${styles.price}`}>{data.price ? "$" + data.price : null}</h3>
+                                        <h4 className={`${styles.productDiscountPrice}`}>${data.discountedPrice}</h4>
+                                        <h3 className={`${styles.price}`}>{data.originalPrice ? "$" + data.originalPrice : null}</h3>
                                     </div>
                                     <div className="flex items-center mt-12 justify-between pr-3">
                                         <div>
@@ -87,7 +122,7 @@ const ProductDetails = ({ data }) => {
                                                 <AiFillHeart
                                                     size={30}
                                                     className="cursor-pointer"
-                                                    onClick={() => setClick(!click)}
+                                                    onClick={() => removeFromWishlistHandler(data)}
                                                     color={click ? "red" : "#333"}
                                                     title="Remove from wishlist"
                                                 />
@@ -95,20 +130,26 @@ const ProductDetails = ({ data }) => {
                                                 <AiOutlineHeart
                                                     size={30}
                                                     className="cursor-pointer"
-                                                    onClick={() => setClick(!click)}
+                                                    onClick={() => addToWishlistHandler(data)}
                                                     color={click ? "red" : "#333"}
                                                     title="Add to wishlist"
                                                 />
                                             )}
                                         </div>
                                     </div>
-                                    <div className={`${styles.button} !mt-6 rounded h-11 flex items-center`}>
+                                    <div className={`${styles.button} !mt-6 rounded h-11 flex items-center`} onClick={() => addToCartHandler(data._id)}>
                                         <span className='text-white flex items-center'>Add To Cart <AiOutlineShoppingCart className='ml-1' /></span>
                                     </div>
                                     <div className='flex items-center pt-8'>
-                                        <img src={`${backend_url}${data.shop.avatar}`}
-                                            className='w-[50px] h-[50px] rounded-full mr-2' />
+                                        <Link to={`/shop/preview/${data?.shop._id}`}>
+                                            <img
+                                                src={`${backend_url}${data?.shop?.avatar}`}
+                                                alt=""
+                                                className="w-[50px] h-[50px] rounded-full mr-2"
+                                            />
+                                        </Link>
                                         <div className='pr-8'>
+
                                             <h3 className={`${styles.shop_name} pb-1 pt-1`}>
                                                 {data.shop.name}
                                             </h3>
@@ -121,6 +162,7 @@ const ProductDetails = ({ data }) => {
                                                 Send Message <AiOutlineMessage className='ml-1' />
                                             </span>
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -129,7 +171,7 @@ const ProductDetails = ({ data }) => {
                     </div>
                 ) : null
             }
-        </div>
+        </div >
     )
 }
 const ProductDetailsInfo = ({ data, product }) => {
