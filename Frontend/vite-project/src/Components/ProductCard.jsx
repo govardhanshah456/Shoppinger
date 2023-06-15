@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { addTowishlist, removeFromwishlist } from "../redux/actions/wishlist";
 import { addToCart } from "../redux/actions/cart";
 import { toast } from "react-toastify"
+import axios from "axios";
+import { server } from "../server";
 const ProductCard = ({ data }) => {
     const [click, setClick] = useState(false);
     const [open, setOpen] = useState(false);
@@ -15,6 +17,7 @@ const ProductCard = ({ data }) => {
     let d = data.name;
     const { wishlist } = useSelector((state) => state.wishlist)
     const { cart } = useSelector((state) => state.cart)
+    const { user } = useSelector((state) => state.user)
     if (!data) {
         return (
             <div>Error</div>
@@ -45,7 +48,7 @@ const ProductCard = ({ data }) => {
             }
         }
     };
-    console.log(wishlist)
+    console.log(data)
     const addToWishlistHandler = (data) => {
         setClick(!click)
         dispatch(addTowishlist(data))

@@ -14,7 +14,7 @@ const ShopAllEvents = () => {
             <DashBoardHeader />
             <div className='flex justify-between w-full'>
                 <div className='w-[80px] 800px:w-[330px]'>
-                    <DashboardSidebar active={3} />
+                    <DashboardSidebar active={5} />
                 </div>
                 <div className='w-full justify-center flex'>
                     <AllEvents />
@@ -75,7 +75,7 @@ const AllEvents = () => {
                 const product_name = d.replace(/\s+/g, "-");
                 return (
                     <>
-                        <Link to={`/event/${product_name}`}>
+                        <Link to={`/event/${params.row.id}`}>
                             <Button>
                                 <AiOutlineEye size={20} />
                             </Button>

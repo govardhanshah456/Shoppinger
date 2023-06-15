@@ -59,7 +59,19 @@ router.get("/get-all-events", async (req, res, next) => {
         return next(new ErrorHandler(error, 400));
     }
 });
-
+router.get("/get-event/:id", async (req, res, next) => {
+    try {
+        console.log("Inside Here Now")
+        const events = await Event.findById(req.params.id);
+        res.status(201).json({
+            success: true,
+            events,
+        });
+        console.log("Here Ended")
+    } catch (error) {
+        return next(new ErrorHandler(error, 400));
+    }
+});
 router.delete("/delete-event/:id", isSellerAuthenticated, catchAsyncErrors(async (req, res, next, err) => {
     console.log("inside here")
     try {

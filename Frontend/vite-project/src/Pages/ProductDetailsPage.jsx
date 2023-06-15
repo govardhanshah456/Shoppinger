@@ -12,19 +12,17 @@ const ProductDetailsPage = () => {
     const { id } = useParams()
     const { allProducts } = useSelector((state) => state.product)
     const [data, setData] = useState(null)
-    // const productName = name.replace(/-/g, " ")
-    const dispatch = useDispatch()
-    // console.log(productName)
-    useEffect(() => {
-        dispatch(getAllProducts())
-
-    }, [])
-    useEffect(() => {
-        const dt = allProducts && allProducts.find((i) => i._id === id)
-        console.log(dt)
-        setData(dt)
-    })
-
+    console.log(id)
+    useEffect(
+        () => {
+            if (!data) {
+                console.log("Inside");
+                const dt = allProducts.find((i) => i._id === id);
+                console.log(dt);
+                setData(dt);
+            }
+        }, []);
+    console.log(data)
     return (
         <div>
             <Header />

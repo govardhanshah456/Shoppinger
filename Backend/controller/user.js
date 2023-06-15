@@ -141,8 +141,10 @@ router.get(
         }
     })
 );
+
 router.get("/logout", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
     try {
+        console.log("Inside")
         res.cookie("token", null, {
             expires: new Date(Date.now()),
             httpOnly: true,
@@ -155,7 +157,41 @@ router.get("/logout", isAuthenticated, catchAsyncErrors(async (req, res, next) =
         return next(new ErrorHandler(error.message, 500))
     }
 }))
-
+router.put("/update-cart/:id", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { cart } = req.body
+        console.log(cart)
+        const user = await User.findById(req.params.id)
+        user.cart = cart
+        await user.save()
+    } catch (error) {
+        console.log(error.message)
+        throw new ErrorHandler(error.message, 400)
+    }
+}))
+router.put("/update-wishlist/:id", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { wishlist } = req.body
+        const user = await User.findById(req.params.id)
+        user.wishlist = wishlist
+        await user.save()
+    } catch (error) {
+        console.log(error.message)
+        throw new ErrorHandler(error.message, 400)
+    }
+}))
+router.put("/update-review-status/:id", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        const id = req.params.id
+        const { hasReviewed } = req.body
+        const user = await User.findById(id)
+        user.hasReviewed = hasReviewed
+        await user.save()
+    }
+    catch (error) {
+        throw new ErrorHandler(error.message, 400)
+    }
+}))
 router.put("/update-user-info", upload.none(), isAuthenticated, catchAsyncErrors(async (req, res, next) => {
     const { name, email, password, phoneNumber } = req.body
     const user = await User.findOne({ email }).select("+password");
@@ -192,6 +228,125 @@ router.put("/update-user-avatar", isAuthenticated, upload.single("image"), catch
         res.status(201).json({
             success: true,
             user
+        })
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500))
+    }
+}))
+
+router.put("/add-address", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        console.log("inside")
+        const { zipCode, country, state, city, address1, address2, addressType, id } = req.body
+        console.log(req.body.zipCode)
+        const user = await User.findById(id)
+        console.log(user)
+        if (user.addresses.length == 0) {
+            const address = {
+                country,
+                city,
+                state,
+                address1,
+                address2,
+                zipCode,
+                addressType
+            }
+            user.addresses.push(address);
+        }
+        else {
+            var ok = 0;
+            user.addresses.forEach(address => {
+                if (address.addressType == addressType) {
+                    ok = 1;
+                }
+            });
+            if (ok) {
+                return next(new ErrorHandler("This tye of address already exists", 500))
+            }
+            const address = {
+                country,
+                city,
+                state,
+                address1,
+                address2,
+                zipCode,
+                addressType
+            }
+            user.addresses.push(address);
+        }
+        await user.save()
+        res.status(201).json({
+            success: true,
+            user,
+        })
+    }
+    catch (error) {
+        return next(new ErrorHandler(error.message, 500))
+    }
+}))
+router.put("/update-address", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        console.log("Got Inside")
+        const { zipCode, country, state, city, address1, address2, addressType, user_id, address_id } = req.body
+        const user = await User.findById(user_id)
+        console.log(req.body)
+        const address = {
+            country,
+            city,
+            state,
+            address1,
+            address2,
+            zipCode,
+            addressType
+        }
+        user.addresses.forEach((addr, index) => {
+            if (addr._id == address_id) {
+                user.addresses[index] = address
+            }
+        })
+        console.log(user.addresses)
+        await user.save()
+        res.status(201).json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        return next(new ErrorHandler("Error Occured", 500))
+    }
+}))
+
+router.put("/delete-address", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { user_id, address_id } = req.body
+        console.log(req.body)
+        const user = await User.findById(user_id)
+        user.addresses = user.addresses.filter((i) => i._id.toString() !== address_id)
+        console.log(user.addresses)
+        await user.save()
+        res.status(201).json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        return next(new ErrorHandler("Helo Error", 500))
+    }
+}))
+
+router.put("/update-password", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { pass, newPass, confPass, id } = req.body
+        const user = await User.findById(id).select("+password")
+        const validPass = user.comparePassword(pass)
+        if (!validPass) {
+            return next(new ErrorHandler("Incorrect Current Password!", 500))
+        }
+        if (newPass != confPass)
+            return next(new ErrorHandler("New Password and Renter New Password does not match!", 500))
+        user.password = newPass
+        await user.save()
+        res.status(201).json({
+            success: true,
+            user,
         })
     } catch (error) {
         return next(new ErrorHandler(error.message, 500))

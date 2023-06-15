@@ -6,7 +6,12 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify"
 import axios from "axios"
 import { server } from '../server.js';
+import { useSelector } from 'react-redux';
 const ShopLogin = () => {
+    const { isSeller } = useSelector((state) => state.seller)
+    if (isSeller) {
+        return <Navigate to="/dashboard" />
+    }
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
     const [show, setShow] = useState(false);

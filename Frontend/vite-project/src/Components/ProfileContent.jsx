@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from "react-redux"
 import { backend_url } from "../server"
 import { AiOutlineCamera, AiOutlineDelete } from 'react-icons/ai'
@@ -15,14 +15,13 @@ import { toast } from 'react-toastify'
 import axios from "axios"
 import { server } from '../server'
 import { loadUser } from "../redux/actions/user"
+import AddressCard from './AddressCard'
+import { Modal } from "@material-ui/core"
 const ProfileContent = ({ active }) => {
     const { user } = useSelector((state) => state.user)
     const [name, setName] = useState(user && user.name)
     const [email, setEmail] = useState(user && user.email)
     const [phoneNumber, setPhoneNumber] = useState(user && user.phoneNumber)
-    const [zipCode, setZipCode] = useState()
-    const [address1, setAddress1] = useState("")
-    const [address2, setAddress2] = useState("")
     const [password, setPassword] = useState("");
     const [avatar, setAvatar] = useState(null);
     const handleSubmit = (e) => {
@@ -43,6 +42,7 @@ const ProfileContent = ({ active }) => {
         axios.put(`${server}/user/update-user-info`, formData, config).then((res) => {
             toast.success("Succesfully Updated")
         }).catch((error) => {
+            // console.log("inside")
             toast.error(error.response.data.message)
         })
 
@@ -116,7 +116,7 @@ const ProfileContent = ({ active }) => {
                                         <input type='number' className={`${styles.input} !w-[95%] mb-4 800px:mb-0`} required value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
                                     </div>
                                     <div className='w-[100%] 800px:w-[50%]'>
-                                        <label className='block pb-2'>Passwordr</label>
+                                        <label className='block pb-2'>Password</label>
                                         <input type='password' className={`${styles.input} !w-[95%] mb-4 800px:mb-0`} required value={password} onChange={(e) => setPassword(e.target.value)} />
                                     </div>
                                 </div>
@@ -155,7 +155,7 @@ const ProfileContent = ({ active }) => {
             {
                 active === 6 && (
                     <>
-                        <PaymentMethod />
+                        <ChangePassword />
                     </>
                 )
             }
@@ -171,19 +171,17 @@ const ProfileContent = ({ active }) => {
     )
 }
 const AllOrders = () => {
-    const orders = [
-        {
-            _id: "7463hvbfbhfbrtr28820221",
-            orderItems: [
-                {
-                    name: "Iphone 14 pro max",
-                },
-            ],
-            totalPrice: 120,
-            orderStatus: "Processing",
-        },
-    ];
+    const [orders, setOrders] = useState(null)
+    const { user } = useSelector((state) => state.user)
+    const id = user && user._id
+    console.log(id)
 
+    useEffect(() => {
+        axios.get(`${server}/order/get-all-order/${id}`).then((res) => {
+            console.log(res)
+            setOrders(res.data.orders)
+        })
+    }, [])
     const columns = [
         { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
 
@@ -238,9 +236,9 @@ const AllOrders = () => {
     orders && orders.forEach((item) => {
         rows.push({
             id: item._id,
-            itemsQty: item.orderItems.length,
+            itemsQty: item.cart.length,
             total: "$" + item.totalPrice,
-            status: item.orderStatus,
+            status: item.status,
         })
     })
     return (
@@ -256,18 +254,16 @@ const AllOrders = () => {
     )
 }
 const AllRefundOrders = () => {
-    const orders = [
-        {
-            _id: "7463hvbfbhfbrtr28820221",
-            orderItems: [
-                {
-                    name: "Iphone 14 pro max",
-                },
-            ],
-            totalPrice: 120,
-            orderStatus: "Processing",
-        },
-    ];
+    const [orders, setOrders] = useState(null)
+    const { user } = useSelector((state) => state.user)
+    const id = user && user._id
+    useEffect(() => {
+        axios.get(`${server}/order/get-all-order-refund/${id}`).then((res) => {
+            console.log(res)
+            setOrders(res.data.orders)
+        })
+    }, [])
+
 
     const columns = [
         { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
@@ -309,7 +305,7 @@ const AllRefundOrders = () => {
             renderCell: (params) => {
                 return (
                     <>
-                        <Link to={`/order/${params.id}`}>
+                        <Link to={`/order/user/${params.id}`}>
                             <Button>
                                 <AiOutlineArrowRight size={20} />
                             </Button>
@@ -326,9 +322,9 @@ const AllRefundOrders = () => {
         orders.forEach((item) => {
             row.push({
                 id: item._id,
-                itemsQty: item.orderItems.length,
+                itemsQty: item.cart.length,
                 total: "US$ " + item.totalPrice,
-                status: item.orderStatus,
+                status: item.status,
             });
         });
 
@@ -345,19 +341,15 @@ const AllRefundOrders = () => {
     );
 };
 const TrackOrder = () => {
-    const orders = [
-        {
-            _id: "7463hvbfbhfbrtr28820221",
-            orderItems: [
-                {
-                    name: "Iphone 14 pro max",
-                },
-            ],
-            totalPrice: 120,
-            orderStatus: "Processing",
-        },
-    ];
-
+    const { user } = useSelector((state) => state.user)
+    const [orders, setOrders] = useState(null)
+    useEffect(() => {
+        axios.get(`${server}/order/get-all-order/${user._id}`, { withCredentials: true }).then((res) => {
+            setOrders(res.data.orders)
+        }).catch((err) => {
+            console.log(err)
+        })
+    }, [])
     const columns = [
         { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
         {
@@ -396,7 +388,7 @@ const TrackOrder = () => {
             renderCell: (params) => {
                 return (
                     <>
-                        <Link to={`/order/${params.id}`}>
+                        <Link to={`/orderTrack/${params.id}`}>
                             <Button>
                                 <MdOutlineTrackChanges size={20} />
                             </Button>
@@ -413,9 +405,9 @@ const TrackOrder = () => {
         orders.forEach((item) => {
             row.push({
                 id: item._id,
-                itemsQty: item.orderItems.length,
+                itemsQty: item.cart.length,
                 total: "US$ " + item.totalPrice,
-                status: item.orderStatus,
+                status: item.status,
             });
         });
 
@@ -431,36 +423,65 @@ const TrackOrder = () => {
         </div>
     );
 };
-const PaymentMethod = () => {
+const ChangePassword = () => {
+    const [currentPassword, setCurrentPassword] = useState("")
+    const [newPassword, setNewPassword] = useState("")
+    const [renterNewPassword, setRenterNewPassword] = useState("")
+    const { user } = useSelector((state) => state.user)
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        const pass = currentPassword, newPass = newPassword, confPass = renterNewPassword, id = user._id
+        axios.put(`${server}/user/update-password`, { pass, newPass, confPass, id }, { withCredentials: true })
+            .then((res) => {
+                console.log(res);
+                toast.success("password Updated Successfully")
+                axios.get(`${server}/user/logout`, { withCredentials: true }).then((res) => {
+                    toast.success("Please Login Again with updated password!")
+                    window.location.reload()
+                })
+                    .catch((error) => {
+                        toast.error(error.response.data.message)
+                    })
+            })
+            .catch((error) => {
+                toast.error(error.response.data.message)
+            })
+    }
     return (
         <div className='w-full px-5'>
             <div className='flex w-full items-center justify-between'>
                 <h1 className='text-[25px] font-[600px] text-[#000000ba] pb-2'>
-                    Payment Methods
+                    Change Password
                 </h1>
-                <div className={`${styles.button} rounded-md`}>
-                    <span className='text-[#fff]'>Add New!</span>
-                </div>
             </div>
             <br />
-            <div className='w-full bg-white rounded-[4px] flex items-center shadow px-3 justify-between  pr-18'>
-                <div className='flex items-center'>
-                    <img
-                        src="https://bonik-react.vercel.app/assets/images/payment-methods/Visa.svg"
-                        alt=""
+            <div className='w-full px-5'>
+                <form onSubmit={handleSubmit} aria-required={true}>
+                    <div className='w-full 800px:flex block pb-3'>
+                        <div className='w-[100%] 800px:w-[50%]'>
+                            <label className='block pb-2'>Current Password</label>
+                            <input type='password' className={`${styles.input} !w-[95%] mb-4 800px:mb-0`} required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className='w-full 800px:flex block pb-3'>
+                        <div className='w-[100%] 800px:w-[50%]'>
+                            <label className='block pb-2'>New Password</label>
+                            <input type='password' className={`${styles.input} !w-[95%] mb-4 800px:mb-0`} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className='w-full 800px:flex block pb-3'>
+                        <div className='w-[100%] 800px:w-[50%]'>
+                            <label className='block pb-2'> Renter New Password</label>
+                            <input type='password' className={`${styles.input} !w-[95%] mb-4 800px:mb-0`} required value={renterNewPassword} onChange={(e) => setRenterNewPassword(e.target.value)} />
+                        </div>
+                    </div>
+                    <input
+                        className={`w-[250px] h-[40px] border border-[#3a24db] text-center text-[#3a24db] rounded-[3px] mt-8 cursor-pointer`}
+                        required
+                        value="Update"
+                        type="submit"
                     />
-                    <h5 className="pl-5 font-[600] text-[12px] 800px:text-[unset]">
-                        Shahriar Sajeeb
-                    </h5>
-                    <div className="pl-8 flex items-center">
-                        <h6 className="text-[12px] 800px:text-[unset]">1234 **** *** ****</h6>
-                        <h5 className="pl-6 text-[12px] 800px:text-[unset]">08/2022</h5>
-                    </div>
-                    <div className="min-w-[10%] flex items-center justify-between pl-8">
-                        <AiOutlineDelete size={25} className="cursor-pointer" />
-                    </div>
-                </div>
-
+                </form>
             </div>
         </div>
     )
@@ -474,18 +495,90 @@ const Address = () => {
     const [address1, setAddress1] = useState("")
     const [address2, setAddress2] = useState("")
     const [addressType, setAddressType] = useState("")
-    const addressTypes = [{
-        "name": "Default",
-    },
-    {
-        "name": "Home",
-    },
-    {
-        "name": "Office",
-    }
+    const [editAddress, setEditAddress] = useState(null)
+    const [deleteAddress, setDeleteAddress] = useState(null)
+    const { user } = useSelector((state) => state.user)
+    const address = user && user.addresses;
+    const id = user && user._id
+    const user_id = user._id
+    const addressTypes = [
+        {
+            "name": "Home",
+        },
+        {
+            "name": "Office",
+        }
     ]
     const handleSubmit = (e) => {
         e.preventDefault()
+        axios.put(`${server}/user/add-address`, { zipCode, country, city, state, address1, address2, addressType, id }, { withCredentials: true }).then((res) => {
+            setOpen(false)
+            toast.success("Succesfully Updated")
+            window.location.reload()
+        }).catch((error) => {
+            setOpen(false)
+            toast.error(error.response.data.message)
+
+        })
+    }
+
+    // var address_id = "";
+    const handleEdit = (address, handleMenuClose) => {
+        console.log(address)
+        // address_id = address._id
+        setEditAddress(address)
+        handleMenuClose()
+    };
+    const handleDeleteActual = (e) => {
+        // e.preventDefault()
+        const address_id = deleteAddress._id
+        axios.put(`${server}/user/delete-address`, { user_id, address_id }, { withCredentials: true }).then((res) => {
+            setModalOpen(false)
+            toast.success("deleted successfully!")
+            window.location.reload()
+        })
+            .catch((error) => {
+                setModalOpen(false)
+                toast.error(error.response.data.message)
+            })
+    }
+    const handleDelete = (address, handleMenuClose) => {
+        // Handle delete logic
+        setDeleteAddress(address)
+        handleMenuClose()
+
+    };
+
+    const handleSubmitEdit = (e) => {
+        e.preventDefault()
+        const zipCode = editAddress.zipCode
+        const country = editAddress.country
+        const city = editAddress.city
+        const state = editAddress.state
+        const address1 = editAddress.address1
+        const address2 = editAddress.address2
+        const addressType = editAddress.addressType
+        const address_id = editAddress._id
+        axios.put(`${server}/user/update-address`, { zipCode, country, city, state, address1, address2, addressType, user_id, address_id }, { withCredentials: true }).then((res) => {
+            setEditAddress(null)
+            console.log("inside")
+            toast.success("Succesfully Updated")
+            window.location.reload()
+        }).catch((error) => {
+            setEditAddress(null)
+            console.log("Inside Here")
+            toast.error(error.response.data.message)
+
+        })
+    }
+    const [modalOpen, setModalOpen] = useState(true);
+
+    const handleOpen = () => {
+        setModalOpen(true);
+    };
+
+    const handleClose = () => {
+        setModalOpen(false);
     }
     return (
         <>
@@ -496,7 +589,7 @@ const Address = () => {
                             <RxCross1
                                 size={30}
                                 className="cursor-pointer"
-                                onClick={() => setOpen(false)}
+                                onClick={() => setOpen(null)}
                             />
                         </div>
                         <h5 className="text-[30px] font-Poppins text-center">
@@ -585,9 +678,11 @@ const Address = () => {
                             <div>
                                 <label className="pb-2">Address Type</label>
                                 <select
-                                    className="w-full mt-2 border h-[35px] rounded-[5px]"
+
+                                    className="w-full mt-2 border h-[35px] rounded-[5px] bg-lightgray cursor:not-allowed"
                                     value={addressType}
                                     onChange={(e) => setAddressType(e.target.value)}
+
                                 >
                                     <option value="Choose your selected products">
                                         Choose an option
@@ -622,7 +717,181 @@ const Address = () => {
                     </div>
                 </div>
                 <br />
-                <div className='w-full bg-white rounded-[4px] flex items-center shadow px-3 justify-between  pr-18'>
+                {
+                    address && address.map((i, index) => (
+                        <AddressCard key={index} address={i} handleEdit={handleEdit} handleDelete={handleDelete} />
+                    ))
+                }
+                {
+                    address.length === 0 ? (
+                        <div>You have not added Address yet</div>
+                    ) : null
+                }
+                {
+                    deleteAddress && <div>
+
+                        <Modal open={modalOpen} onClose={handleClose}>
+                            <div className="modal-content">
+                                <h2>Confirmation</h2>
+                                <p>Are you sure you want to delete?</p>
+                                <div className="modal-actions">
+                                    <Button variant="contained" color="secondary" onClick={handleDeleteActual}>
+                                        Yes
+                                    </Button>
+                                    <Button variant="contained" color="primary" onClick={handleClose}>
+                                        No
+                                    </Button>
+                                </div>
+                            </div>
+                        </Modal>
+                    </div>
+                }
+                {editAddress &&
+                    <div className="fixed top-0 left-0 w-full h-screen bg-[#00000062] z-[20000] flex items-center justify-center">
+                        <div className="w-[100%] 800px:w-[40%] h-[105vh] bg-white rounded-md shadow p-4">
+                            <div className="w-full flex justify-end">
+                                <RxCross1
+                                    size={30}
+                                    className="cursor-pointer"
+                                    onClick={() => setEditAddress(null)}
+                                />
+                            </div>
+                            <h5 className="text-[30px] font-Poppins text-center">
+                                Update Address
+                            </h5>
+                            {/* create coupoun code */}
+                            <form onSubmit={handleSubmitEdit} aria-required={true}>
+                                <br />
+                                <div>
+                                    <label className="pb-2">
+                                        ZipCode <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="name"
+                                        required
+                                        value={editAddress.zipCode}
+                                        className="mt-2 appearance-none block w-full px-3 h-[35px] border border-gray-300 rounded-[3px] placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            zipCode: e.target.value
+                                        })}
+                                        placeholder="Enter your ZipCode"
+                                    />
+                                </div>
+                                <br />
+                                <div>
+                                    <label className="pb-2">
+                                        Country
+                                        <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="value"
+                                        value={editAddress.country}
+                                        required
+                                        className="mt-2 appearance-none block w-full px-3 h-[35px] border border-gray-300 rounded-[3px] placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            country: e.target.value
+                                        })}
+                                        placeholder="Enter your Country"
+                                    />
+                                </div>
+                                <br />
+                                <div>
+                                    <label className="pb-2">State</label>
+                                    <input
+                                        type="text"
+                                        name="value"
+                                        value={editAddress.state}
+                                        className="mt-2 appearance-none block w-full px-3 h-[35px] border border-gray-300 rounded-[3px] placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            state: e.target.value
+                                        })}
+                                        placeholder="Enter your State..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="pb-2">City</label>
+                                    <input
+                                        type="text"
+                                        name="value"
+                                        value={editAddress.city}
+                                        className="mt-2 appearance-none block w-full px-3 h-[35px] border border-gray-300 rounded-[3px] placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            city: e.target.value
+                                        })}
+                                        placeholder="Enter your State..."
+                                    />
+                                </div>
+                                <br />
+                                <div>
+                                    <label className="pb-2">Address1</label>
+                                    <input
+                                        type="text"
+                                        name="value"
+                                        value={editAddress.address1}
+                                        className="mt-2 appearance-none block w-full px-3 h-[35px] border border-gray-300 rounded-[3px] placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            address1: e.target.value
+                                        })}
+                                        placeholder="Enter your coupon code max amount..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="pb-2">Address2</label>
+                                    <input
+                                        type="text"
+                                        name="value"
+                                        value={editAddress.address2}
+                                        className="mt-2 appearance-none block w-full px-3 h-[35px] border border-gray-300 rounded-[3px] placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            address2: e.target.value
+                                        })}
+                                        placeholder="Enter your coupon code max amount..."
+                                    />
+                                </div>
+                                <br />
+                                <div>
+                                    <label className="pb-2">Address Type</label>
+                                    <select
+                                        disabled
+                                        className="w-full mt-2 border h-[35px] rounded-[5px]"
+                                        value={editAddress.addressType}
+                                        onChange={(e) => setEditAddress({
+                                            ...editAddress,
+                                            addressType: e.target.value
+                                        })}
+                                    >
+                                        <option value="Choose your selected products">
+                                            Choose an option
+                                        </option>
+                                        {addressTypes &&
+                                            addressTypes.map((i) => (
+                                                <option value={i.name} key={i.name}>
+                                                    {i.name}
+                                                </option>
+                                            ))}
+                                    </select>
+                                </div>
+                                <br />
+                                <div>
+                                    <input
+                                        type="submit"
+                                        value="Create"
+                                        className="mt-2 appearance-none block w-[50%] ml-auto mr-auto px-3 h-[35px] bg-black text-[#fff] border border-gray-300 rounded-[3px] placeholder-gray-400 cursor-pointer focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    />
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+                {/* <div className='w-full bg-white rounded-[4px] flex items-center shadow px-3 justify-between  pr-18'>
                     <div className='flex items-center'>
                         <h5 className="pl-5 font-[600] text-[12px] 800px:text-[unset]">
                             102,
@@ -636,7 +905,7 @@ const Address = () => {
                         </div>
                     </div>
 
-                </div>
+                </div> */}
             </div>
         </>
     )

@@ -1,15 +1,19 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { HiMinus, HiOutlineMinus, HiPlus } from 'react-icons/hi'
 import { RxCross1 } from 'react-icons/rx'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import { addToCart, removeFromCart } from '../redux/actions/cart'
-import { backend_url } from '../server'
+import { backend_url, server } from '../server'
 import styles from '../Styles/styles'
+import axios from 'axios'
 const CartData = ({ data, quantityChangeHandler, removeFromCartHandler }) => {
     const [val, setVal] = useState(data.qty)
     const totalPrice = data.discountedPrice * val;
     const dispatch = useDispatch()
+    const { cart } = useSelector((state) => state.cart)
+    const { user } = useSelector((state) => state.user)
+
     const increment = (data) => {
         if (data.stock < val) {
             toast.error("Product stock limited!");

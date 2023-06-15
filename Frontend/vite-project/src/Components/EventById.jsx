@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react'
-import styles from '../Styles/styles'
-import EventCard from './EventCard'
-import { useDispatch, useSelector } from 'react-redux'
-import { getAllEvents } from '../redux/actions/event'
-import Loader from './Loader'
-import Store from '../redux/store'
-const Event = () => {
+import React from 'react'
+import { useSelector } from 'react-redux';
+import Loader from './Loader';
+import EventCard from './EventCard';
+import { useParams } from 'react-router-dom';
+import styles from '../Styles/styles';
+const EventById = () => {
     const { allEvents, isLoading } = useSelector((state) => state.event);
     // console.log(allEvents[0])
+    const { id } = useParams()
+    const event = allEvents && allEvents.find((i) => i._id === id)
+    console.log(event)
     return (
         <>
             {
@@ -17,7 +19,7 @@ const Event = () => {
                     <div>
                         <div className={`${styles.section}`}>
                             <div className={`${styles.heading}`}>
-                                <h1>Popular Events</h1>
+                                <h1>Event You're Browsing</h1>
                             </div>
                             <div className='w-full grid'>
                                 <EventCard data={allEvents && allEvents[0]} />
@@ -31,4 +33,4 @@ const Event = () => {
     )
 }
 
-export default Event
+export default EventById

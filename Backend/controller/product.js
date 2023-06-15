@@ -6,7 +6,7 @@ const ErrorHandler = require("../utils/errroHandler")
 const Shop = require("../model/shop")
 const Product = require("../model/product")
 const fs = require('fs')
-const { isSellerAuthenticated } = require("../middleware/auth")
+const { isSellerAuthenticated, isAuthenticated } = require("../middleware/auth")
 router.post("/create-product", upload.array("images"), catchAsyncErrors(async (req, res, next) => {
     try {
         console.log(req.body)
@@ -45,6 +45,35 @@ router.get("/get-all-products-shop/:id", catchAsyncErrors(async (req, res, next)
     }
     catch (error) {
         return next(new ErrorHandler(error.message, 500))
+    }
+}))
+router.put("/create-review/:id", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+    try {
+        const id = req.params.id
+        const product = await Product.findById(id)
+        if (!product) {
+            return next(new ErrorHandler("product does not exist!"))
+        }
+        const { user, rating, comment } = req.body
+        const createdAt = Date.now()
+        const review = {
+            user, rating, comment, id, createdAt
+        }
+        product.reviews.push(review)
+        var stars = 0
+        product.reviews.forEach((i) => {
+            stars += i.rating
+        })
+        stars = stars / product.reviews.length
+        product.ratings = stars
+        await product.save()
+        res.status(200).json({
+            success: true,
+            message: "Review created successfully",
+            product,
+        });
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 400))
     }
 }))
 router.get(

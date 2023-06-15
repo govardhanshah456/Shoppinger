@@ -28,6 +28,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
             setClick(false)
         }
     }, [wishlist])
+
     const addToWishlistHandler = (data) => {
         setClick(!click)
         dispatch(addTowishlist(data))

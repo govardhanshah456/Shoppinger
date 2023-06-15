@@ -80,7 +80,7 @@ const ShopCreateEvent = () => {
             <DashBoardHeader />
             <div className="flex justify-between w-full">
                 <div className="w-[80px] 800px:w-[330px]">
-                    <DashboardSidebar active={4} />
+                    <DashboardSidebar active={6} />
                 </div>
                 <div className="w-full justify-center flex">
                     <div className="w-[90%] 800px:w-[50%] bg-white  shadow h-[80vh] rounded-[4px] p-3 overflow-y-scroll">

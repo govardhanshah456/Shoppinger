@@ -57,7 +57,7 @@ const ProfileSidebar = ({ active, setActive }) => {
             <div className='flex items-center cursor-pointer w-full mb-8' onClick={() => setActive(6)}>
                 <AiOutlineCreditCard size={20} color={active === 6 ? "red" : ""} />
                 <span className={`pl-3 ${active === 6 ? "text-red" : ""}`}>
-                    Payment Methods
+                    Change Password
                 </span>
             </div>
             <div className='flex items-center cursor-pointer w-full mb-8' onClick={() => setActive(7)}>

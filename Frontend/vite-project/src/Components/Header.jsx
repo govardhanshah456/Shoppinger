@@ -10,12 +10,13 @@ import { CgProfile } from "react-icons/cg"
 import Navbar from './Navbar'
 import Dropdown from './Dropdown'
 import { useDispatch, useSelector } from 'react-redux'
-import { backend_url } from '../server'
+import { backend_url, server } from '../server'
 import Cart from './Cart'
 import WishList from "./WishList"
 import { RxCross1 } from 'react-icons/rx'
 import { useEffect } from 'react'
 import { getAllProducts } from '../redux/actions/product'
+import axios from 'axios'
 // import { backend_url } from '../server'
 const Header = (activeHeading) => {
     const [search, setSearch] = useState("")
@@ -34,7 +35,6 @@ const Header = (activeHeading) => {
     // const handleSearchChange = (e) => {
     //     e.preventDefault()
     // }
-
     const handleSearchChange = (e) => {
         const term = e.target.value;
         setSearch(term);

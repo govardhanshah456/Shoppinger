@@ -28,4 +28,16 @@ export const wishlistReducer = createReducer(initialState, {
             wishlist: state.wishlist.filter((i) => i._id !== action.payload),
         };
     },
+    resetwishlist: (state, action) => {
+        return {
+            ...state,
+            wishlist: []
+        }
+    },
+    initializewishlist: (state, action) => {
+        return {
+            ...state,
+            wishlist: action.payload,
+        }
+    }
 })

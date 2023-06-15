@@ -4,10 +4,13 @@ import styles from '../Styles/styles'
 import { AiFillHeart, AiOutlineHeart, AiOutlineMessage, AiOutlineShoppingCart } from 'react-icons/ai'
 import { useDispatch, useSelector } from 'react-redux'
 import { getAllProductsShop } from '../redux/actions/product'
-import { backend_url } from '../server'
+import { backend_url, server } from '../server'
 import { toast } from 'react-toastify'
 import { addToCart } from '../redux/actions/cart'
+import { AiFillStar, AiOutlineStar } from "react-icons/ai";
+import { BsStarHalf } from "react-icons/bs";
 import { addTowishlist, removeFromwishlist } from '../redux/actions/wishlist'
+import axios from 'axios'
 // import { set } from 'mongoose'
 const ProductDetails = ({ data }) => {
     const [count, setCount] = useState(1)
@@ -16,6 +19,8 @@ const ProductDetails = ({ data }) => {
     const [select, setSelect] = useState(0)
     const { product } = useSelector((state) => state.product)
     const { cart } = useSelector((state) => state.cart)
+    const { user } = useSelector((state) => state.user)
+    console.log(product)
     const dispatch = useDispatch()
     useEffect(() => {
         dispatch(getAllProductsShop(data && data.shop._id));
@@ -39,7 +44,16 @@ const ProductDetails = ({ data }) => {
             setClick(false);
         }
     }, [wishlist, data]);
-    console.log(data)
+    let totalReviews = 0, totalRatings = 0;
+    console.log(product)
+    totalReviews = product && product.reduce((acc, prod) => acc + prod.reviews.length, 0);
+    totalRatings = product &&
+        product.reduce(
+            (acc, prod) =>
+                acc + prod.reviews.reduce((sum, review) => sum + review.rating, 0),
+            0
+        );
+    let avg = totalRatings / totalReviews || 0;
     const addToWishlistHandler = (data) => {
         setClick(!click)
         dispatch(addTowishlist(data))
@@ -49,7 +63,7 @@ const ProductDetails = ({ data }) => {
         dispatch(removeFromwishlist(data))
     }
     // const { cart } = useSelector((state) => state.cart)
-    const addToCartHandler = (id) => {
+    const addToCartHandler = async (id) => {
         const isItemExists = cart && cart.find((i) => i._id === id);
         if (isItemExists) {
             toast.error("Item already in cart!");
@@ -59,6 +73,7 @@ const ProductDetails = ({ data }) => {
             } else {
                 const cartData = { ...data, qty: count };
                 dispatch(addToCart(cartData));
+                console.log(cart)
                 toast.success("Item added to cart successfully!");
             }
         }
@@ -154,7 +169,7 @@ const ProductDetails = ({ data }) => {
                                                 {data.shop.name}
                                             </h3>
                                             <h5 className="pb-3 text-[15px]">
-                                                Rating-({data.shop.ratings})
+                                                Rating-({avg}/5)
                                             </h5>
                                         </div>
                                         <div className={`${styles.button} bg-[#6443d1]`} onClick={handleMessageSubmit}>
@@ -167,14 +182,14 @@ const ProductDetails = ({ data }) => {
                                 </div>
                             </div>
                         </div>
-                        <ProductDetailsInfo data={data} product={product} />
+                        <ProductDetailsInfo data={data} product={product} avg={avg} totalReviews={totalReviews} />
                     </div>
                 ) : null
             }
         </div >
     )
 }
-const ProductDetailsInfo = ({ data, product }) => {
+const ProductDetailsInfo = ({ data, product, avg, totalReviews }) => {
     const [active, setActive] = useState(1)
     return (
         <div className='bg-[#f5f6fb] px-3 800px:px-10 py-2 rounded'>
@@ -219,17 +234,37 @@ const ProductDetailsInfo = ({ data, product }) => {
             {
                 active === 1 ? (
                     <p className='py-2 text-[18px] leading-8 pb-10 whitespace-pre-line'>
-                        The bridge spanning a 100-foot gully stood in front of him as the last obstacle blocking him from reaching his destination. While people may have called it a "bridge", the reality was it was nothing more than splintered wooden planks held together by rotting ropes. It was questionable whether it would hold the weight of a child, let alone the weight of a grown man. The problem was there was no other way across the gully, and this played into his calculations of whether or not it was worth the risk of trying to cross it.
+                        {data.description}
                     </p>
                 ) : null
             }
-            {
-                active === 2 ? (
-                    <div className='w-full justify-center min-h-[40vh] flex items-center'>
-                        <p>No Reviews yet!</p>
+            {active === 2 ? (
+                <div className="w-full min-h-[40vh] flex flex-col items-center py-3 overflow-y-scroll">
+                    {data &&
+                        data.reviews.map((item, index) => (
+                            <div className="w-full flex my-2">
+                                <img
+                                    src={`${backend_url}/${item.user.avatar}`}
+                                    alt=""
+                                    className="w-[50px] h-[50px] rounded-full"
+                                />
+                                <div className="pl-2 ">
+                                    <div className="w-full flex items-center">
+                                        <h1 className="font-[500] mr-3">{item.user.name}</h1>
+                                        <Ratings rating={data?.ratings} />
+                                    </div>
+                                    <p>{item.comment}</p>
+                                </div>
+                            </div>
+                        ))}
+
+                    <div className="w-full flex justify-center">
+                        {data && data.reviews.length === 0 && (
+                            <h5>No Reviews have for this product!</h5>
+                        )}
                     </div>
-                ) : null
-            }
+                </div>
+            ) : null}
             {
                 active === 3 ? (
                     <div className="w-full block 800px:flex p-5">
@@ -244,7 +279,7 @@ const ProductDetailsInfo = ({ data, product }) => {
                                     <div className="pl-3">
                                         <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
                                         <h5 className="pb-2 text-[15px]">
-                                            (4/5) Ratings
+                                            ({avg}/5) Ratings
                                         </h5>
                                     </div>
                                 </div>
@@ -262,7 +297,7 @@ const ProductDetailsInfo = ({ data, product }) => {
                                     Total Products: <span className="font-[500]">{product && product.length}</span>
                                 </h5>
                                 <h5 className="font-[600] pt-3">
-                                    Total Reviews: <span className="font-[500]">324</span>
+                                    Total Reviews: <span className="font-[500]">{totalReviews}</span>
                                 </h5>
                                 <Link to="/">
                                     <div
@@ -279,4 +314,40 @@ const ProductDetailsInfo = ({ data, product }) => {
         </div>
     )
 }
+const Ratings = ({ rating }) => {
+    const stars = [];
+
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            stars.push(
+                <AiFillStar
+                    key={i}
+                    size={20}
+                    color="#f6b100"
+                    className="mr-2 cursor-pointer"
+                />
+            );
+        } else if (i === Math.ceil(rating) && !Number.isInteger(rating)) {
+            stars.push(
+                <BsStarHalf
+                    key={i}
+                    size={17}
+                    color="#f6ba00"
+                    className="mr-2 cursor-pointer"
+                />
+            );
+        } else {
+            stars.push(
+                <AiOutlineStar
+                    key={i}
+                    size={20}
+                    color="#f6ba00"
+                    className="mr-2 cursor-pointer"
+                />
+            );
+        }
+    }
+    return <div className="flex"> {stars}</div>;
+};
+
 export default ProductDetails

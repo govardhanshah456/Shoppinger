@@ -5,11 +5,12 @@ const jwt = require("jsonwebtoken")
 const { upload } = require("../multer")
 const catchAsyncErrors = require("../middleware/catchAsyncErrors")
 const shop = require("../model/shop")
+const Shop = shop
 const fs = require("fs")
 const ErrorHandler = require("../utils/errroHandler")
 const sendShopToken = require("../utils/sendShopToken")
 const sendMail = require("../utils/sendMail")
-const { isSellerAuthenticated } = require("../middleware/auth")
+const { isSellerAuthenticated, isAuthenticated } = require("../middleware/auth")
 router.post("/create-shop", upload.single("file"), catchAsyncErrors(async (req, res, next) => {
     try {
         const { name, email, password, address, zipCode, phoneNumber } = req.body
@@ -173,6 +174,65 @@ router.get("/get-shop-info/:id", catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler(error.message, 500))
     }
 }))
+router.put(
+    "/update-shop-avatar",
+    isSellerAuthenticated,
+    upload.single("image"),
+    catchAsyncErrors(async (req, res, next) => {
+        try {
+            const existsUser = await Shop.findById(req.seller._id);
+
+            const existAvatarPath = `uploads/${existsUser.avatar}`;
+
+            fs.unlinkSync(existAvatarPath);
+
+            const fileUrl = path.join(req.file.filename);
+
+            const seller = await Shop.findByIdAndUpdate(req.seller._id, {
+                avatar: fileUrl,
+            });
+
+            res.status(200).json({
+                success: true,
+                seller,
+            });
+        } catch (error) {
+            return next(new ErrorHandler(error.message, 500));
+        }
+    })
+);
+
+// update seller info
+router.put(
+    "/update-seller-info",
+    isSellerAuthenticated,
+    catchAsyncErrors(async (req, res, next) => {
+        try {
+            const { name, description, address, phoneNumber, zipCode } = req.body;
+
+            const shopp = await Shop.findOne(req.seller._id);
+
+            if (!shopp) {
+                return next(new ErrorHandler("User not found", 400));
+            }
+
+            shopp.name = name;
+            shopp.description = description;
+            shopp.address = address;
+            shopp.phoneNumber = phoneNumber;
+            shopp.zipCode = zipCode;
+
+            await shopp.save();
+
+            res.status(201).json({
+                success: true,
+                shopp,
+            });
+        } catch (error) {
+            return next(new ErrorHandler(error.message, 500));
+        }
+    })
+);
 router.get(
     "/logout",
     catchAsyncErrors(async (req, res, next) => {

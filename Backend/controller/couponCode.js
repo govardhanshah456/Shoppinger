@@ -40,4 +40,16 @@ router.delete("/delete-coupon/:id", isSellerAuthenticated, catchAsyncError(async
         message: "Deletion Successful!"
     })
 }))
+
+router.get("/get-coupon-value/:name", catchAsyncError(async (req, res, next) => {
+    try {
+        const couponCodee = await couponCode.findOne({ name: req.params.name })
+        res.status(201).json({
+            success: true,
+            couponCodee,
+        })
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500))
+    }
+}))
 module.exports = router

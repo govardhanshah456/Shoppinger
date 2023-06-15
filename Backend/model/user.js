@@ -37,6 +37,9 @@ const userSchema = new mongoose.Schema({
         city: {
             type: String,
         },
+        state: {
+            type: String,
+        },
         address1: {
             type: String,
         },
@@ -50,6 +53,16 @@ const userSchema = new mongoose.Schema({
             type: String,
         }
     }],
+    cart: {
+        type: Array,
+    },
+    wishlist: {
+        type: Array,
+    },
+    hasReviewed: {
+        type: Boolean,
+        default: false,
+    },
     role: {
         type: String,
     },

@@ -6,11 +6,16 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify"
 import axios from "axios"
 import { server } from '../server.js';
+import { useDispatch } from 'react-redux';
+import { initializeCart } from '../redux/actions/cart.js';
+import { useSelector } from 'react-redux';
+import { loadUser } from '../redux/actions/user.js';
 const Login = () => {
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
     const [show, setShow] = useState(false);
     const navigate = useNavigate()
+    const dispatch = useDispatch()
     const handleSubmit = async (e) => {
         e.preventDefault()
         await axios
@@ -23,14 +28,20 @@ const Login = () => {
                 { withCredentials: true }
             )
             .then((res) => {
+                console.log(res)
                 toast.success("Login Success!");
-                <Navigate to="/" />
-                window.location.reload(true)
+                console.log(res)
+                navigate("/")
+                dispatch(loadUser())
+                dispatch(initializeCart(res.data.user.cart))
             })
             .catch((err) => {
+                console.log(err)
                 toast.error(err.response.data.message);
             });
     }
+    const { cart } = useSelector((state) => state.cart)
+    console.log(cart)
     return (
         <div className='min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
             <div className='sm:mx-auto sm:w-full sm:max-w-md'>

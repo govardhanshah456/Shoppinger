@@ -1,19 +1,24 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { RxCross1 } from 'react-icons/rx'
 import styles from '../Styles/styles'
 import { IoBagHandleOutline } from "react-icons/io5";
 import CartData from './CartData';
+import { server } from '../server';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, removeFromCart } from '../redux/actions/cart';
+// import user from '../../../../Backend/model/user';
+import axios from 'axios';
 const Cart = ({ setOpenCart }) => {
     const { cart } = useSelector((state) => state.cart)
+    const { user } = useSelector((state) => state.user)
     const cartData = cart
     const dispatch = useDispatch()
     const totalPrice = cart.reduce(
         (acc, item) => acc + item.qty * item.discountedPrice,
         0
     );
+
     const quantityChangeHandler = (data) => {
         console.log(data)
 
@@ -24,7 +29,7 @@ const Cart = ({ setOpenCart }) => {
         console.log(data)
         dispatch(removeFromCart(data));
     };
-    console.log(totalPrice)
+    console.log(cart)
     return (
         <div className="fixed top-0 left-0 w-full bg-[#0000004b] h-screen z-10">
             <div className="fixed top-0 right-0 h-full w-[25%] bg-white flex flex-col overflow-y-scroll justify-between shadow-sm">
